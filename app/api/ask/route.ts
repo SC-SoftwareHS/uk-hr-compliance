@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AzureOpenAI } from 'openai'
 import { AskRequest, RAGResponse } from '@/lib/types'
 import { retrieve } from '@/lib/retrieval'
+import { searchAndIngestRealTime } from '@/lib/web-retrieval'
 import { SYSTEM_PROMPT, buildUserPrompt } from '@/lib/prompt'
 
 const client = new AzureOpenAI({
@@ -24,7 +25,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const documents = await retrieve(question, 'UK', topic)
+    let documents = await retrieve(question, 'UK', topic)
+    let usedRealTimeRetrieval = false
+    
+    // If no relevant documents found, try real-time retrieval as fallback
+    if (documents.length === 0) {
+      console.log(`🔄 No documents found in database, attempting real-time retrieval...`)
+      
+      try {
+        const realTimeDocuments = await searchAndIngestRealTime(question, topic)
+        
+        if (realTimeDocuments.length > 0) {
+          // Re-run retrieval to get the newly ingested documents
+          documents = await retrieve(question, 'UK', topic)
+          usedRealTimeRetrieval = true
+          console.log(`✅ Real-time retrieval successful: ${documents.length} documents now available`)
+        } else {
+          console.log(`❌ Real-time retrieval found no additional content`)
+        }
+      } catch (error) {
+        console.error('Real-time retrieval failed:', error)
+      }
+    }
     
     let response: RAGResponse
 
@@ -61,6 +83,7 @@ export async function POST(request: NextRequest) {
       doc_ids: documents.map(d => d.id),
       latency_ms: latencyMs,
       refused: response.refused,
+      real_time_retrieval_used: usedRealTimeRetrieval,
     })
 
     return NextResponse.json(response)

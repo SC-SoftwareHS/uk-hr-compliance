@@ -11,6 +11,12 @@ const topics: { value: Topic | ''; label: string }[] = [
   { value: 'Holiday', label: 'Holiday Entitlement' },
   { value: 'Pensions', label: 'Pensions' },
   { value: 'Visas', label: 'Visas & Right to Work' },
+  { value: 'Employment', label: 'Employment Contracts' },
+  { value: 'Redundancy', label: 'Redundancy' },
+  { value: 'Disciplinary', label: 'Disciplinary & Dismissal' },
+  { value: 'Working Time', label: 'Working Time & Wages' },
+  { value: 'Equality', label: 'Equality & Discrimination' },
+  { value: 'Health Safety', label: 'Health & Safety' },
 ]
 
 export default function Home() {

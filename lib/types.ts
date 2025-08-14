@@ -40,4 +40,4 @@ export interface RetrievalResult {
   scores: number[]
 }
 
-export type Topic = 'TUPE' | 'Sick' | 'Maternity/Paternity' | 'Holiday' | 'Pensions' | 'Visas'
+export type Topic = 'TUPE' | 'Sick' | 'Maternity/Paternity' | 'Holiday' | 'Pensions' | 'Visas' | 'Employment' | 'Redundancy' | 'Disciplinary' | 'Working Time' | 'Equality' | 'Health Safety'
