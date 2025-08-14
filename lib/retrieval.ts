@@ -104,6 +104,13 @@ export async function retrieve(
   const relevantDocs = documents.filter((_, i) => scores[i] >= threshold)
 
   if (relevantDocs.length === 0) {
+    // Check if the best score is significantly low - if so, return empty to trigger real-time retrieval
+    const bestScore = scores.length > 0 ? scores[0] : 0
+    if (bestScore < 0.4) {
+      console.log(`🔍 Best similarity score (${bestScore.toFixed(3)}) is too low, returning empty to trigger real-time retrieval`)
+      return []
+    }
+    // If scores are decent but below threshold, return top results
     return documents.slice(0, 6)
   }
 
