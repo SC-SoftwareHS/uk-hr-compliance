@@ -100,7 +100,7 @@ export async function retrieve(
     return []
   }
 
-  const threshold = 0.7
+  const threshold = 0.5
   const relevantDocs = documents.filter((_, i) => scores[i] >= threshold)
 
   if (relevantDocs.length === 0) {
