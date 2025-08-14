@@ -13,30 +13,48 @@ const supabase = createClient(
 
 // Search GOV.UK API for relevant pages
 async function searchGovUK(query: string): Promise<Array<{url: string, title: string}>> {
-  const searchUrl = `https://www.gov.uk/api/search.json?q=${encodeURIComponent(query)}&count=5&fields=web_url,title`
-  
-  try {
-    const response = await fetch(searchUrl)
-    if (!response.ok) {
-      console.error(`GOV.UK search failed: ${response.status}`)
-      return []
+  // Try original query first, then fallback to simpler terms
+  const searchQueries = [
+    query,
+    // Use known working fallback terms
+    'employment',
+    'workplace'
+  ].filter(q => q && q.length > 0)
+
+  for (const searchQuery of searchQueries) {
+    const searchUrl = `https://www.gov.uk/api/search.json?q=${encodeURIComponent(searchQuery)}&count=5&fields=web_url,title`
+    
+    try {
+      console.log(`Trying GOV.UK search: "${searchQuery}"`)
+      const response = await fetch(searchUrl)
+      if (!response.ok) {
+        console.error(`GOV.UK search failed for "${searchQuery}": ${response.status}`)
+        continue
+      }
+      
+      const data = await response.json()
+      
+      const results = data.results?.map((result: any) => ({
+        url: result.web_url || result.link,
+        title: result.title
+      })).filter((item: any) => 
+        item.url && 
+        item.url.includes('gov.uk') &&
+        !item.url.includes('/api/') &&
+        !item.url.includes('#')
+      ) || []
+      
+      if (results.length > 0) {
+        console.log(`Found ${results.length} GOV.UK results for "${searchQuery}"`)
+        return results
+      }
+    } catch (error) {
+      console.error(`GOV.UK search error for "${searchQuery}":`, error)
     }
-    
-    const data = await response.json()
-    
-    return data.results?.map((result: any) => ({
-      url: result.web_url,
-      title: result.title
-    })).filter((item: any) => 
-      item.url && 
-      item.url.includes('gov.uk') &&
-      !item.url.includes('/api/') &&
-      !item.url.includes('#')
-    ) || []
-  } catch (error) {
-    console.error('GOV.UK search error:', error)
-    return []
   }
+  
+  console.log('No GOV.UK results found for any search query')
+  return []
 }
 
 // Search ACAS for relevant pages  
